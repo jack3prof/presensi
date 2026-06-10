@@ -50,7 +50,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxdQcSe0ku-y9jdVbCmq291W3aZCSI6arVvEkXAsLI-WgOA6Srjybk5ztuPXuy-ni2mHA/exec";
 
 const scannedData = new Set();
-const qrRegex = /^\s*(?:[A-Z]\s*){3}(?:\d\s*){2}$/;
+const qrRegex = /^\s*[A-Z]\s*[A-Z]\s*[A-Z]\s*\d\s*\d\s*$/;
 
 async function kirimKeSheet(id) {
   await fetch(API_URL, {
