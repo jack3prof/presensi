@@ -86,44 +86,76 @@
         // Regex Pattern: 4 huruf, 3 angka, 3 huruf, 2 angka (Case-Insensitive 'i')
         const regexPattern = /^([a-zA-Z]{4})\s*(\d{3})\s*([a-zA-Z]{3})\s*(\d{2})$/i;
 
+        // Ambil riwayat QR yang sudah pernah di-scan dari LocalStorage
+        function getScannedHistory() {
+            const history = localStorage.getItem("scanned_qr_history");
+            return history ? JSON.parse(history) : [];
+        }
+
+        // Simpan QR baru ke LocalStorage
+        function saveToHistory(code) {
+            const history = getScannedHistory();
+            if (!history.includes(code)) {
+                history.push(code);
+                localStorage.setItem("scanned_qr_history", JSON.stringify(history));
+            }
+        }
+
         function onScanSuccess(decodedText, decodedResult) {
-            // Mencegah pemrosesan ganda saat QR yang sama terus terbaca
+            // Mencegah pemrosesan berulang saat frame kamera berjalan
             if (isProcessing) return;
 
-            // Bersihkan teks dari newline, tab, atau spasi berlebih
-            const cleanText = decodedText.replace(/[\r\n\t]/g, '').trim();
+            // Bersihkan teks dari newline, tab, atau spasi berlebih dan samakan ke UPPERCASE
+            const cleanText = decodedText.replace(/[\r\n\t]/g, '').trim().toUpperCase();
+            const statusEl = document.getElementById("status-text");
 
-            // Cek apakah format sesuai Regex
+            // 1. UJI REGEX PATTERN
             if (regexPattern.test(cleanText)) {
-                isProcessing = true; // Kunci sementara agar tidak terbaca berulang kali
-                
-                // Tampilkan notifikasi Data Terkirim
-                const statusEl = document.getElementById("status-text");
-                statusEl.style.background = "rgba(52, 199, 89, 0.85)";
-                statusEl.style.color = "#ffffff";
-                statusEl.innerText = `✅ Data Terkirim!\nCode: "${cleanText}"`;
+                isProcessing = true; // Kunci proses
 
-                // Kirim data ke Bot Telegram via sendData
-                // (Catatan: Jika dikirim via tg.sendData, Telegram akan menutup WebApp secara otomatis.
-                // Jika Anda ingin tetap di WebApp tanpa pernah menutupnya, kirimkan via tg.sendData saat tombol '✕' ditekan).
-                
-                // Jeda 2,5 detik lalu buka kembali kunci untuk scan QR berikutnya
-                setTimeout(() => {
-                    statusEl.style.background = "rgba(255, 255, 255, 0.1)";
-                    statusEl.style.color = "#eee";
-                    statusEl.innerText = "Arahkan kamera ke QR Code berikutnya...";
-                    isProcessing = false; // Buka kunci siap scan QR selanjutnya
-                }, 2500);
+                const history = getScannedHistory();
+
+                // 2. CEK APAKAH QR SUDAH PERNAH DI-SCAN SEBELUMNYA
+                if (history.includes(cleanText)) {
+                    // Tampilkan Peringatan Duplikat (Kuning/Oranye)
+                    statusEl.style.background = "rgba(255, 149, 0, 0.85)";
+                    statusEl.style.color = "#ffffff";
+                    statusEl.innerText = `⚠️ QR Ini Sudah Pernah Di-scan!\nCode: "${cleanText}"`;
+
+                    // Jeda 2,5 detik lalu reset status & buka kunci kamera kembali tanpa mengirim data
+                    setTimeout(() => {
+                        statusEl.style.background = "rgba(255, 255, 255, 0.1)";
+                        statusEl.style.color = "#eee";
+                        statusEl.innerText = "Arahkan kamera ke QR Code lain...";
+                        isProcessing = false;
+                    }, 2500);
+
+                } else {
+                    // 3. JIKA QR BARU & VALID
+                    // Simpan ke riwayat lokal agar tidak bisa di-scan 2x di masa depan
+                    saveToHistory(cleanText);
+
+                    // Tampilkan notifikasi Data Terkirim (Hijau)
+                    statusEl.style.background = "rgba(52, 199, 89, 0.85)";
+                    statusEl.style.color = "#ffffff";
+                    statusEl.innerText = `✅ Data Terkirim!\nCode: "${cleanText}"`;
+
+                    // Hentikan pemindaian kamera lalu kirim data & tutup WebApp
+                    html5QrCode.stop().then(() => {
+                        tg.sendData(cleanText); // Mengirim data ke Bot & Otomatis menutup WebApp
+                    }).catch(() => {
+                        tg.sendData(cleanText);
+                    });
+                }
 
             } else {
-                // Tampilkan pesan jika format QR salah
-                const statusEl = document.getElementById("status-text");
+                // 4. JIKA FORMAT REGEX TIDAK SESUAI
+                isProcessing = true;
                 statusEl.style.background = "rgba(255, 69, 58, 0.85)";
                 statusEl.style.color = "#ffffff";
                 statusEl.innerText = `❌ Format QR Tidak Sesuai!\nTerbaca: "${cleanText}"`;
 
                 // Jeda 2 detik lalu reset pesan error
-                isProcessing = true;
                 setTimeout(() => {
                     statusEl.style.background = "rgba(255, 255, 255, 0.1)";
                     statusEl.style.color = "#eee";
