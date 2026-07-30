@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan QR Code</title>
+    <!-- Library Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Library QR Scanner (html5-qrcode) -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #reader {
+            width: 100%;
+            max-width: 400px;
+        }
+        .header {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        .close-btn {
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            font-size: 20px;
+            padding: 5px 12px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .status {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #ccc;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <span style="font-weight: bold;">Scan QR Presensi</span>
+        <!-- Tombol Silang (X) untuk menghentikan kamera -->
+        <button class="close-btn" onclick="stopCamera()">✕</button>
+    </div>
+
+    <div id="reader"></div>
+    <div class="status" id="status-text">Arahkan kamera ke QR Code...</div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+
+        const html5QrCode = new Html5Qrcode("reader");
+
+        // Regex Pattern: 4 huruf, 3 angka, 3 huruf, 2 angka
+        const regexPattern = /^([a-zA-Z]{4})\s*(\d{3})\s*([a-zA-Z]{3})\s*(\d{2})$/;
+
+        function onScanSuccess(decodedText, decodedResult) {
+            const cleanText = decodedText.trim();
+            document.getElementById("status-text").innerText = "Mengecek format: " + cleanText;
+
+            // Validasi dengan Regex
+            if (regexPattern.test(cleanText)) {
+                // Hentikan kamera
+                html5QrCode.stop().then(() => {
+                    // Langsung kirimkan data ke bot Telegram
+                    tg.sendData(cleanText);
+                    tg.close();
+                }).catch(err => {
+                    console.error("Gagal menghentikan kamera:", err);
+                    tg.sendData(cleanText);
+                    tg.close();
+                });
+            } else {
+                document.getElementById("status-text").innerText = "❌ Format QR tidak cocok! Coba lagi.";
+            }
+        }
+
+        // Jalankan Kamera
+        html5QrCode.start(
+            { facingMode: "environment" }, // Kamera belakang
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            onScanSuccess
+        ).catch(err => {
+            document.getElementById("status-text").innerText = "Gagal membuka kamera: " + err;
+        });
+
+        // Fungsi Berhenti / Tutup
+        function stopCamera() {
+            html5QrCode.stop().then(() => {
+                tg.close();
+            }).catch(() => {
+                tg.close();
+            });
+        }
+    </script>
+</body>
+</html>
