@@ -1,187 +1,442 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scan QR Code Presensi</title>
-    <!-- Library Telegram WebApp -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Library QR Scanner (html5-qrcode) -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <title>PRESENSI DK3</title>
+
+    <!-- Library Scanner QR Code -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
     <style>
-        body {
+        /* =========================
+           RESET & BASIC
+        ========================= */
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            background-color: #121212;
-            color: #fff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
         }
+
+        body {
+            font-family: Roboto, Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: #1565c0;
+            color: white;
+            padding: 16px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+        }
+
+        /* =========================
+           CONTAINER & CARD
+        ========================= */
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 12px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, .08);
+        }
+
+        /* =========================
+           SCANNER AREA
+        ========================= */
         #reader {
             width: 100%;
-            max-width: 400px;
             border-radius: 12px;
             overflow: hidden;
+            border: 2px dashed #cbd5e1;
+            background: #f8fafc;
         }
-        .header {
-            position: absolute;
-            top: 15px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            box-sizing: border-box;
-            z-index: 10;
-        }
-        .close-btn {
-            background: rgba(255, 59, 48, 0.85);
-            color: white;
-            border: none;
-            font-size: 18px;
-            font-weight: bold;
-            padding: 8px 14px;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-        }
-        .status {
-            margin-top: 20px;
-            padding: 12px 18px;
-            font-size: 14px;
-            color: #eee;
+
+        .scan-status {
             text-align: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            max-width: 85%;
-            word-break: break-all;
-            transition: all 0.3s ease;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #1565c0;
+        }
+
+        /* =========================
+           SEARCH & INPUT
+        ========================= */
+        input {
+            width: 100%;
+            padding: 13px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            font-size: 16px;
+            margin-bottom: 14px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #1565c0;
+            box-shadow: 0 0 0 2px rgba(21, 101, 192, .15);
+        }
+
+        .search {
+            margin-bottom: 10px;
+        }
+
+        /* =========================
+           TABLE
+        ========================= */
+        .table-wrap {
+            overflow: auto;
+            max-height: 400px;
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        th {
+            background: #1565c0;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        /* =========================
+           LOADING & SNACKBAR
+        ========================= */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 15px;
+        }
+
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 4px solid #ddd;
+            border-top-color: #1565c0;
+            animation: spin 1s linear infinite;
+            margin: auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .snackbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 20px;
+            display: none;
+            z-index: 100;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* =========================
+           DARK MODE
+        ========================= */
+        @media(prefers-color-scheme:dark) {
+            body {
+                background: #0f172a;
+                color: white;
+            }
+
+            .card {
+                background: #1e293b;
+            }
+
+            #reader {
+                background: #0f172a;
+                border-color: #475569;
+            }
+
+            input {
+                background: #334155;
+                color: white;
+                border-color: #475569;
+            }
+
+            td {
+                color: white;
+            }
+
+            tr:nth-child(even) {
+                background: #334155;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <div class="header">
-        <span style="font-weight: 600; font-size: 16px;">Scan QR Presensi</span>
-        <!-- Tombol Silang (X) untuk menghentikan kamera -->
-        <button class="close-btn" onclick="stopCamera()">✕</button>
+        PRESENSI DK3
     </div>
 
-    <div id="reader"></div>
-    <div class="status" id="status-text">Arahkan kamera ke QR Code...</div>
+    <div class="container">
+
+        <!-- CAMERA SCANNER CARD -->
+        <div class="card">
+            <div id="reader"></div>
+            <div id="scanStatus" class="scan-status">Arahkan kamera ke QR Code...</div>
+        </div>
+
+        <!-- DATA TABLE CARD -->
+        <div class="card">
+            <input class="search" id="cari" type="text" placeholder="🔍 Cari QRcode atau Waktu Input" oninput="filterData()">
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Memuat data...</p>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>QRcode</th>
+                            <th>Waktu Input</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelData"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SNACKBAR -->
+    <div class="snackbar" id="snackbar"></div>
 
     <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
+        // =========================
+        // KONFIGURASI API
+        // =========================
+        const API = "https://script.google.com/macros/s/AKfycbzkXuFDaEbVXgxNeumxh3Ytab_4TaQgrasX2EzewUCgu8ckGL5gaKnDM8rRVaNurhtQ/exec";
 
-        const html5QrCode = new Html5Qrcode("reader");
+        let semuaData = [];
         let isProcessing = false;
+        let html5QrcodeScanner;
 
-        // Regex Pattern: 4 huruf, 3 angka, 3 huruf, 2 angka (Case-Insensitive 'i')
-        const regexPattern = /^([a-zA-Z]{4})\s*(\d{3})\s*([a-zA-Z]{3})\s*(\d{2})$/i;
-
-        // Ambil riwayat QR yang sudah pernah di-scan dari LocalStorage
-        function getScannedHistory() {
-            const history = localStorage.getItem("scanned_qr_history");
-            return history ? JSON.parse(history) : [];
-        }
-
-        // Simpan QR baru ke LocalStorage
-        function saveToHistory(code) {
-            const history = getScannedHistory();
-            if (!history.includes(code)) {
-                history.push(code);
-                localStorage.setItem("scanned_qr_history", JSON.stringify(history));
-            }
-        }
-
-        function onScanSuccess(decodedText, decodedResult) {
-            // Mencegah pemrosesan berulang saat frame kamera berjalan
-            if (isProcessing) return;
-
-            // Bersihkan teks dari newline, tab, atau spasi berlebih dan samakan ke UPPERCASE
-            const cleanText = decodedText.replace(/[\r\n\t]/g, '').trim().toUpperCase();
-            const statusEl = document.getElementById("status-text");
-
-            // 1. UJI REGEX PATTERN
-            if (regexPattern.test(cleanText)) {
-                isProcessing = true; // Kunci proses
-
-                const history = getScannedHistory();
-
-                // 2. CEK APAKAH QR SUDAH PERNAH DI-SCAN SEBELUMNYA
-                if (history.includes(cleanText)) {
-                    // Tampilkan Peringatan Duplikat (Kuning/Oranye)
-                    statusEl.style.background = "rgba(255, 149, 0, 0.85)";
-                    statusEl.style.color = "#ffffff";
-                    statusEl.innerText = `⚠️ QR Ini Sudah Pernah Di-scan!\nCode: "${cleanText}"`;
-
-                    // Jeda 2,5 detik lalu reset status & buka kunci kamera kembali tanpa mengirim data
-                    setTimeout(() => {
-                        statusEl.style.background = "rgba(255, 255, 255, 0.1)";
-                        statusEl.style.color = "#eee";
-                        statusEl.innerText = "Arahkan kamera ke QR Code lain...";
-                        isProcessing = false;
-                    }, 2500);
-
-                } else {
-                    // 3. JIKA QR BARU & VALID
-                    // Simpan ke riwayat lokal agar tidak bisa di-scan 2x di masa depan
-                    saveToHistory(cleanText);
-
-                    // Tampilkan notifikasi Data Terkirim (Hijau)
-                    statusEl.style.background = "rgba(52, 199, 89, 0.85)";
-                    statusEl.style.color = "#ffffff";
-                    statusEl.innerText = `✅ Data Terkirim!\nCode: "${cleanText}"`;
-
-                    // Hentikan pemindaian kamera lalu kirim data & tutup WebApp
-                    html5QrCode.stop().then(() => {
-                        tg.sendData(cleanText); // Mengirim data ke Bot & Otomatis menutup WebApp
-                    }).catch(() => {
-                        tg.sendData(cleanText);
-                    });
-                }
-
-            } else {
-                // 4. JIKA FORMAT REGEX TIDAK SESUAI
-                isProcessing = true;
-                statusEl.style.background = "rgba(255, 69, 58, 0.85)";
-                statusEl.style.color = "#ffffff";
-                statusEl.innerText = `❌ Format QR Tidak Sesuai!\nTerbaca: "${cleanText}"`;
-
-                // Jeda 2 detik lalu reset pesan error
-                setTimeout(() => {
-                    statusEl.style.background = "rgba(255, 255, 255, 0.1)";
-                    statusEl.style.color = "#eee";
-                    statusEl.innerText = "Arahkan kamera ke QR Code...";
-                    isProcessing = false;
-                }, 2000);
-            }
-        }
-
-        // Jalankan Kamera
-        html5QrCode.start(
-            { facingMode: "environment" }, // Gunakan kamera belakang
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            onScanSuccess
-        ).catch(err => {
-            document.getElementById("status-text").innerText = "Gagal membuka kamera: " + err;
+        // =========================
+        // INITIALIZATION
+        // =========================
+        document.addEventListener("DOMContentLoaded", function () {
+            loadData();
+            initScanner();
         });
 
-        // Fungsi Berhenti / Tutup Kamera via Tombol Silang (X)
-        function stopCamera() {
-            html5QrCode.stop().then(() => {
-                tg.close();
-            }).catch(() => {
-                tg.close();
+        // =========================
+        // SCANNER QR CODE SETUP
+        // =========================
+        function initScanner() {
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                rememberLastUsedCamera: true
             });
+
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
+
+        async function onScanSuccess(decodedText, decodedResult) {
+            // Cegah scan beruntun saat data sedang diproses
+            if (isProcessing) return;
+            isProcessing = true;
+
+            document.getElementById("scanStatus").innerText = "Mengecek & Menyimpan: " + decodedText;
+
+            // 1. Cek Duplikasi di Data Lokal terlebih dahulu
+            const isExist = semuaData.some(item => 
+                (item.qrcode || item.pengguna || "").toString().trim().toUpperCase() === decodedText.trim().toUpperCase()
+            );
+
+            if (isExist) {
+                snackbar("❌ QR Code sudah pernah terdaftar!");
+                resetScanDelay();
+                return;
+            }
+
+            // 2. Kirim Data ke Google Apps Script
+            await simpanQrCode(decodedText.trim());
+        }
+
+        function onScanFailure(error) {
+            // Mengabaikan kesalahan frame per detik saat mencari QR
+        }
+
+        function resetScanDelay() {
+            setTimeout(() => {
+                isProcessing = false;
+                document.getElementById("scanStatus").innerText = "Arahkan kamera ke QR Code...";
+            }, 2000); // Jedah 2 detik sebelum bisa scan QR berikutnya
+        }
+
+        // =========================
+        // AMBIL DATA FROM SERVER
+        // =========================
+        async function loadData() {
+            tampilLoading(true);
+
+            try {
+                const response = await fetch(API + "?action=list");
+                semuaData = await response.json();
+                tampilTabel(semuaData);
+            } catch (e) {
+                snackbar("Gagal mengambil data");
+                console.error(e);
+            }
+
+            tampilLoading(false);
+        }
+
+        // =========================
+        // SIMPAN QR CODE KE SERVER
+        // =========================
+        async function simpanQrCode(qrResult) {
+            try {
+                const params = new URLSearchParams({
+                    action: "simpan",
+                    qrcode: qrResult,
+                    // Mengirimkan waktu input lokal sebagai cadangan (jika GAS tidak otomatis generate timestamp)
+                    waktu: new Date().toLocaleString("id-ID")
+                });
+
+                let response = await fetch(`${API}?${params.toString()}`);
+                let hasil = await response.json();
+
+                if (hasil.success) {
+                    snackbar("✅ Berhasil menyimpan QR: " + qrResult);
+                    await loadData(); // Reload tabel
+                } else {
+                    snackbar("❌ " + (hasil.message || "Gagal menyimpan QR Code"));
+                }
+
+            } catch (e) {
+                snackbar("Server tidak merespon");
+                console.error(e);
+            }
+
+            resetScanDelay();
+        }
+
+        // =========================
+        // TAMPIL TABEL
+        // =========================
+        function tampilTabel(data) {
+            let html = "";
+
+            if (!Array.isArray(data) || data.length === 0) {
+                html = `
+                <tr>
+                    <td colspan="2" style="text-align:center">Tidak ada data</td>
+                </tr>`;
+            } else {
+                data.forEach(function (r) {
+                    // Penyesuaian key fallback untuk kompatibilitas data lama
+                    let qrcode = aman(r.qrcode || r.pengguna || "");
+                    let waktu = aman(r.waktu || r.timestamp || r.konfirmasi || "-");
+
+                    html += `
+                    <tr>
+                        <td><b>${qrcode}</b></td>
+                        <td>${waktu}</td>
+                    </tr>`;
+                });
+            }
+
+            document.getElementById("tabelData").innerHTML = html;
+        }
+
+        // =========================
+        // FILTER PENCARIAN
+        // =========================
+        function filterData() {
+            let keyword = document.getElementById("cari").value.toLowerCase();
+
+            let hasil = semuaData.filter(function (r) {
+                let qrcode = (r.qrcode || r.pengguna || "").toLowerCase();
+                let waktu = (r.waktu || r.timestamp || r.konfirmasi || "").toLowerCase();
+
+                return (
+                    qrcode.includes(keyword) ||
+                    waktu.includes(keyword)
+                );
+            });
+
+            tampilTabel(hasil);
+        }
+
+        // =========================
+        // UTILITAS
+        // =========================
+        function tampilLoading(status) {
+            document.getElementById("loading").style.display = status ? "block" : "none";
+        }
+
+        function snackbar(text) {
+            let s = document.getElementById("snackbar");
+            s.innerHTML = text;
+            s.style.display = "block";
+
+            setTimeout(function () {
+                s.style.display = "none";
+            }, 3000);
+        }
+
+        function aman(text) {
+            if (!text) return "";
+            return text
+                .toString()
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
         }
     </script>
 </body>
+
 </html>
