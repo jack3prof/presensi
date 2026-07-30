@@ -1,117 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <title>Presensi QR</title>
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- FAVICON -->
-  <link rel="icon" href="logobpw.png" type="image/png">
-
-  <script src="https://unpkg.com/html5-qrcode"></script>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 16px;
-      text-align: center;
-      background: #f5f5f5;
-    }
-
-    h2 {
-      font-size: 24px;
-    }
-
-    #reader {
-      width: 100% !important;
-      max-width: 400px;
-      margin: auto;
-    }
-
-    #status {
-      font-size: 18px;
-      margin-top: 20px;
-      font-weight: bold;
-      padding: 10px;
-      background: white;
-      border-radius: 8px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan QR Code Presensi</title>
+    <!-- Library Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Library QR Scanner (html5-qrcode) -->
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        #reader {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .header {
+            position: absolute;
+            top: 15px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        .close-btn {
+            background: rgba(255, 59, 48, 0.85);
+            color: white;
+            border: none;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 8px 14px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        .status {
+            margin-top: 20px;
+            padding: 12px 18px;
+            font-size: 14px;
+            color: #eee;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            max-width: 85%;
+            word-break: break-all;
+            transition: all 0.3s ease;
+        }
+    </style>
 </head>
 <body>
 
-<h2>SCAN QR PRESENSI</h2>
+    <div class="header">
+        <span style="font-weight: 600; font-size: 16px;">Scan QR Presensi</span>
+        <!-- Tombol Silang (X) untuk menghentikan kamera -->
+        <button class="close-btn" onclick="stopCamera()">✕</button>
+    </div>
 
-<div id="reader"></div>
+    <div id="reader"></div>
+    <div class="status" id="status-text">Arahkan kamera ke QR Code...</div>
 
-<p id="status">Siap scan QR Code...</p>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbxdQcSe0ku-y9jdVbCmq291W3aZCSI6arVvEkXAsLI-WgOA6Srjybk5ztuPXuy-ni2mHA/exec";
+        const html5QrCode = new Html5Qrcode("reader");
+        let isProcessing = false;
 
-const scannedData = new Set();
-const qrRegex = /^\s*[A-Z]\s*[A-Z]\s*[A-Z]\s*\d\s*\d\s*$/;
+        // Regex Pattern: 4 huruf, 3 angka, 3 huruf, 2 angka (Case-Insensitive 'i')
+        const regexPattern = /^([a-zA-Z]{4})\s*(\d{3})\s*([a-zA-Z]{3})\s*(\d{2})$/i;
 
-async function kirimKeSheet(id) {
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify({ id: id })
-  });
-}
+        // Ambil riwayat QR yang sudah pernah di-scan dari LocalStorage
+        function getScannedHistory() {
+            const history = localStorage.getItem("scanned_qr_history");
+            return history ? JSON.parse(history) : [];
+        }
 
-// Menambahkan suara beep
-const beepSound = new Audio('beep.mp3'); // Ganti dengan lokasi file audio beep kamu
+        // Simpan QR baru ke LocalStorage
+        function saveToHistory(code) {
+            const history = getScannedHistory();
+            if (!history.includes(code)) {
+                history.push(code);
+                localStorage.setItem("scanned_qr_history", JSON.stringify(history));
+            }
+        }
 
-async function onScanSuccess(text) {
+        function onScanSuccess(decodedText, decodedResult) {
+            // Mencegah pemrosesan berulang saat frame kamera berjalan
+            if (isProcessing) return;
 
-  if (!qrRegex.test(text)) {
-    document.getElementById("status").innerText = "❌ QR tidak valid";
-    return;
-  }
+            // Bersihkan teks dari newline, tab, atau spasi berlebih dan samakan ke UPPERCASE
+            const cleanText = decodedText.replace(/[\r\n\t]/g, '').trim().toUpperCase();
+            const statusEl = document.getElementById("status-text");
 
-  if (scannedData.has(text)) {
-    document.getElementById("status").innerText = "👍🏻 Scan Berhasil";
-    return;
-  }
+            // 1. UJI REGEX PATTERN
+            if (regexPattern.test(cleanText)) {
+                isProcessing = true; // Kunci proses
 
-  scannedData.add(text);
+                const history = getScannedHistory();
 
-  document.getElementById("status").innerText = "⏳ Mengirim...";
+                // 2. CEK APAKAH QR SUDAH PERNAH DI-SCAN SEBELUMNYA
+                if (history.includes(cleanText)) {
+                    // Tampilkan Peringatan Duplikat (Kuning/Oranye)
+                    statusEl.style.background = "rgba(255, 149, 0, 0.85)";
+                    statusEl.style.color = "#ffffff";
+                    statusEl.innerText = `⚠️ QR Ini Sudah Pernah Di-scan!\nCode: "${cleanText}"`;
 
-  try {
-    await kirimKeSheet(text);
+                    // Jeda 2,5 detik lalu reset status & buka kunci kamera kembali tanpa mengirim data
+                    setTimeout(() => {
+                        statusEl.style.background = "rgba(255, 255, 255, 0.1)";
+                        statusEl.style.color = "#eee";
+                        statusEl.innerText = "Arahkan kamera ke QR Code lain...";
+                        isProcessing = false;
+                    }, 2500);
 
-    // Mainkan suara beep saat scan berhasil
-    beepSound.play();
+                } else {
+                    // 3. JIKA QR BARU & VALID
+                    // Simpan ke riwayat lokal agar tidak bisa di-scan 2x di masa depan
+                    saveToHistory(cleanText);
 
-    document.getElementById("status").innerText =
-      "TEKS " + text + " BERHASIL DIKIRIM, SIAP SCAN QRCODE SELANJUTNYA";
+                    // Tampilkan notifikasi Data Terkirim (Hijau)
+                    statusEl.style.background = "rgba(52, 199, 89, 0.85)";
+                    statusEl.style.color = "#ffffff";
+                    statusEl.innerText = `✅ Data Terkirim!\nCode: "${cleanText}"`;
 
-    // Auto-reset setelah 3 detik
-    setTimeout(() => {
-      document.getElementById("status").innerText = "Siap scan QR Code...";
-      scanner.start(
-        { facingMode: "environment" }, // mengaktifkan kamera belakang lagi
-        { fps: 10, qrbox: 250 }, // set fps dan ukuran kotak scan
-        onScanSuccess // callback jika berhasil scan
-      );
-    }, 3000); // reset scanner setelah 3 detik
-  } catch (e) {
-    document.getElementById("status").innerText = "❌ GAGAL KIRIM";
-  }
-}
+                    // Hentikan pemindaian kamera lalu kirim data & tutup WebApp
+                    html5QrCode.stop().then(() => {
+                        tg.sendData(cleanText); // Mengirim data ke Bot & Otomatis menutup WebApp
+                    }).catch(() => {
+                        tg.sendData(cleanText);
+                    });
+                }
 
-const scanner = new Html5Qrcode("reader");
+            } else {
+                // 4. JIKA FORMAT REGEX TIDAK SESUAI
+                isProcessing = true;
+                statusEl.style.background = "rgba(255, 69, 58, 0.85)";
+                statusEl.style.color = "#ffffff";
+                statusEl.innerText = `❌ Format QR Tidak Sesuai!\nTerbaca: "${cleanText}"`;
 
-scanner.start(
-  { facingMode: "environment" },
-  {
-    fps: 10,
-    qrbox: 250
-  },
-  onScanSuccess
-);
-</script>
+                // Jeda 2 detik lalu reset pesan error
+                setTimeout(() => {
+                    statusEl.style.background = "rgba(255, 255, 255, 0.1)";
+                    statusEl.style.color = "#eee";
+                    statusEl.innerText = "Arahkan kamera ke QR Code...";
+                    isProcessing = false;
+                }, 2000);
+            }
+        }
 
+        // Jalankan Kamera
+        html5QrCode.start(
+            { facingMode: "environment" }, // Gunakan kamera belakang
+            { fps: 10, qrbox: { width: 250, height: 250 } },
+            onScanSuccess
+        ).catch(err => {
+            document.getElementById("status-text").innerText = "Gagal membuka kamera: " + err;
+        });
+
+        // Fungsi Berhenti / Tutup Kamera via Tombol Silang (X)
+        function stopCamera() {
+            html5QrCode.stop().then(() => {
+                tg.close();
+            }).catch(() => {
+                tg.close();
+            });
+        }
+    </script>
 </body>
 </html>
