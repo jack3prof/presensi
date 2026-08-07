@@ -272,32 +272,47 @@
         });
 
         // =========================
-        // FORMAT WAKTU (dd mmm yy ; hh:mm)
+        // FORMAT WAKTU (dd mmm yy)
+        // PERBAIKAN: Memecah string DD/MM/YYYY secara manual agar tidak terbaca MM/DD/YYYY
         // =========================
         function formatWaktuCustom(dateString) {
             if (!dateString || dateString === "-") return "-";
-
-            let date = new Date(dateString);
-
-            // Menangani format tanggal string non-ISO atau dari spreadsheet lokal
-            if (isNaN(date.getTime()) && typeof dateString === 'string') {
-                date = new Date(dateString.replace(/-/g, "/"));
-            }
-
-            if (isNaN(date.getTime())) return dateString;
 
             const bulanIndo = [
                 "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
                 "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
             ];
 
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = bulanIndo[date.getMonth()];
-            const year = String(date.getFullYear()).slice(-2);
-            const hours = String(date.getHours()).padStart(2, '0');
-            const minutes = String(date.getMinutes()).padStart(2, '0');
+            let day, monthIndex, year;
 
-            return `${day} ${month} ${year} ; ${hours}:${minutes}`;
+            // Memproses string berformat "DD/MM/YYYY" atau "DD-MM-YYYY"
+            if (typeof dateString === 'string' && (dateString.includes('/') || dateString.includes('-'))) {
+                let parts = dateString.trim().split(" ");
+                let dateParts = parts[0].split(/[\/-]/);
+
+                if (dateParts.length === 3) {
+                    day = parseInt(dateParts[0], 10);           // Angka ke-1 = Tanggal (DD)
+                    monthIndex = parseInt(dateParts[1], 10) - 1; // Angka ke-2 = Bulan (MM), kurangi 1 untuk indeks 0-11
+                    
+                    let rawYear = dateParts[2];
+                    year = rawYear.length === 4 ? rawYear.slice(-2) : rawYear;
+
+                    if (!isNaN(day) && !isNaN(monthIndex) && monthIndex >= 0 && monthIndex < 12) {
+                        return `${day} ${bulanIndo[monthIndex]} ${year}`;
+                    }
+                }
+            }
+
+            // Fallback jika formatnya berupa ISO String bawaan JS (misal dari new Date().toISOString())
+            let date = new Date(dateString);
+            if (!isNaN(date.getTime())) {
+                day = date.getDate();
+                monthIndex = date.getMonth();
+                year = String(date.getFullYear()).slice(-2);
+                return `${day} ${bulanIndo[monthIndex]} ${year}`;
+            }
+
+            return dateString;
         }
 
         // =========================
