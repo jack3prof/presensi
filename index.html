@@ -257,7 +257,7 @@
         // =========================
         // KONFIGURASI API
         // =========================
-        const API = "https://script.google.com/macros/s/AKfycbzkXuFDaEbVXgxNeumxh3Ytab_4TaQgrasX2EzewUCgu8ckGL5gaKnDM8rRVaNurhtQ/exec";
+        const API = "https://script.google.com/macros/s/AKfycbwqtiA--iOe1vyZjZLgrq255TFnTLz93IIIYY75E4QCRYo70G9SyrMcOsKipmpFVk6tPQ/exec";
 
         let semuaData = [];
         let isProcessing = false;
@@ -271,49 +271,32 @@
             initScanner();
         });
 
-        // =========================
-        // FORMAT WAKTU (dd mmm yy)
-        // PERBAIKAN: Memecah string DD/MM/YYYY secara manual agar tidak terbaca MM/DD/YYYY
-        // =========================
-        function formatWaktuCustom(dateString) {
-            if (!dateString || dateString === "-") return "-";
 
-            const bulanIndo = [
-                "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
-                "Jul", "Agu", "Sep", "Okt", "Nov", "Des"
-            ];
+		// =========================
+		// FORMAT WAKTU (dd MMM yy HH:mm) 
+		// =========================
+		function formatWaktuCustom(dateString) {
 
-            let day, monthIndex, year;
+			if (!dateString || dateString === "-") return "-";
 
-            // Memproses string berformat "DD/MM/YYYY" atau "DD-MM-YYYY"
-            if (typeof dateString === 'string' && (dateString.includes('/') || dateString.includes('-'))) {
-                let parts = dateString.trim().split(" ");
-                let dateParts = parts[0].split(/[\/-]/);
+			const bulanIndo = [
+				"Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+				"Jul", "Agus", "Sep", "Okt", "Nov", "Des"
+			];
 
-                if (dateParts.length === 3) {
-                    day = parseInt(dateParts[0], 10);           // Angka ke-1 = Tanggal (DD)
-                    monthIndex = parseInt(dateParts[1], 10) - 1; // Angka ke-2 = Bulan (MM), kurangi 1 untuk indeks 0-11
-                    
-                    let rawYear = dateParts[2];
-                    year = rawYear.length === 4 ? rawYear.slice(-2) : rawYear;
+			// 1. Jika input adalah ISO String (contoh: 2026-07-08T10:45:10.000Z) atau valid Date
+			let dateObj = new Date(dateString);
+			if (!isNaN(dateObj.getTime()) && (typeof dateString === 'string' && (dateString.includes('T') || dateString.includes('Z')))) {
+				let day = String(dateObj.getMonth()+1).padStart(2, '0');
+				let month = bulanIndo[dateObj.getDate()-1];
+				let year = String(dateObj.getFullYear()).slice(-2);
+				let hours = String(dateObj.getHours()).padStart(2, '0');
+				let minutes = String(dateObj.getMinutes()).padStart(2, '0');
 
-                    if (!isNaN(day) && !isNaN(monthIndex) && monthIndex >= 0 && monthIndex < 12) {
-                        return `${day} ${bulanIndo[monthIndex]} ${year}`;
-                    }
-                }
-            }
+				return `${day} ${month} ${year} ${hours}:${minutes}`;
+			}
+		}
 
-            // Fallback jika formatnya berupa ISO String bawaan JS (misal dari new Date().toISOString())
-            let date = new Date(dateString);
-            if (!isNaN(date.getTime())) {
-                day = date.getDate();
-                monthIndex = date.getMonth();
-                year = String(date.getFullYear()).slice(-2);
-                return `${day} ${bulanIndo[monthIndex]} ${year}`;
-            }
-
-            return dateString;
-        }
 
         // =========================
         // SCANNER QR CODE SETUP
