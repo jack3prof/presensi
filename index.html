@@ -287,8 +287,8 @@
 			// 1. Jika input adalah ISO String (contoh: 2026-07-08T10:45:10.000Z) atau valid Date
 			let dateObj = new Date(dateString);
 			if (!isNaN(dateObj.getTime()) && (typeof dateString === 'string' && (dateString.includes('T') || dateString.includes('Z')))) {
-				let day = String(dateObj.getDate()+1).padStart(2, '0');
-				let month = bulanIndo[dateObj.getMonth()-1];
+				let day = String(dateObj.getDate()).padStart(2, '0');
+				let month = bulanIndo[dateObj.getMonth()];
 				let year = String(dateObj.getFullYear()).slice(-2);
 				let hours = String(dateObj.getHours()).padStart(2, '0');
 				let minutes = String(dateObj.getMinutes()).padStart(2, '0');
