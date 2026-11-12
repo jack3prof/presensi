@@ -181,7 +181,8 @@
 
     <!-- Step 2: List Kelas -->
     <div class="kelas-list" id="kelas-container"></div>
-
+	<div id="sektor-detail-container"></div>
+	
     <!-- Step 3: Form Kehadiran Bendahara Kelas -->
     <div id="kelas-form-container"></div>
 
@@ -189,42 +190,24 @@
 
     <!-- Bagian Rekapitulasi Data -->
     <div class="rekap-section">
-        <h3>Rekapitulasi Kehadiran & Aplikasi Telegram Bendahara</h3>
+        <h3>Rekapitulasi Kehadiran & Install Telegram Bendahara</h3>
         <div id="loading-status" class="loading">Memuat data rekap...</div>
 
-        <!-- Rekap 1: Kehadiran Bendahara -->
-        <h4>1. Rekapitulasi Kehadiran Bendahara per Sektor</h4>
+<!-- Rekap Gabungan -->
+        <h4></h4>
         <div class="table-responsive">
-            <table id="table-rekap-1" style="display: none;">
+            <table id="table-rekap-gabungan" style="display: none;">
                 <thead>
                     <tr>
                         <th>Sektor</th>
                         <th>Jadwal Sosialisasi</th>
                         <th>Total Kelas</th>
                         <th>Bisa Hadir</th>
-                        <th>Tidak Bisa</th>
-                        <th>Belum Mengisi</th>
-                    </tr>
-                </thead>
-                <tbody id="tbody-rekap-1"></tbody>
-            </table>
-        </div>
-
-        <!-- Rekap 2: Status Instalasi Telegram -->
-        <h4>2. Rekapitulasi Instalasi Telegram Bendahara per Sektor</h4>
-        <div class="table-responsive">
-            <table id="table-rekap-2" style="display: none;">
-                <thead>
-                    <tr>
-                        <th>Sektor</th>
-                        <th>Jadwal Sosialisasi</th>
-                        <th>Total Kelas</th>
                         <th>Sudah Install</th>
-                        <th>Belum Install</th>
                         <th>Belum Mengisi</th>
                     </tr>
                 </thead>
-                <tbody id="tbody-rekap-2"></tbody>
+                <tbody id="tbody-rekap-gabungan"></tbody>
             </table>
         </div>
     </div>
@@ -236,7 +219,7 @@
     const GVIZ_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=sosialisasi_online`;
 
     let masterData = [
-        {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"IA301"}, {id_sektor:"SU", id_kelas:"IA303"}, {id_sektor:"SU", id_kelas:"IA508"}, {id_sektor:"SU", id_kelas:"IA303"}, 
+        {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"IA301"}, {id_sektor:"SU", id_kelas:"IA508"}, {id_sektor:"SU", id_kelas:"IA303"}, 
         {id_sektor:"SU", id_kelas:"IA303"}, {id_sektor:"SU", id_kelas:"IA402"}, {id_sektor:"SU", id_kelas:"AA301"}, {id_sektor:"SU", id_kelas:"AA301"}, {id_sektor:"SU", id_kelas:"IA508"}, {id_sektor:"SU", id_kelas:"AA301"}, {id_sektor:"SU", id_kelas:"IA508"}, {id_sektor:"SU", id_kelas:"IA508"}, {id_sektor:"SU", id_kelas:"IA304"}, {id_sektor:"SU", id_kelas:"IA508"}, 
         {id_sektor:"SU", id_kelas:"IA508"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"IA508"}, {id_sektor:"SU", id_kelas:"IA303"}, {id_sektor:"SU", id_kelas:"AA301"}, {id_sektor:"SU", id_kelas:"IA304"}, {id_sektor:"SU", id_kelas:"AA301"}, {id_sektor:"SU", id_kelas:"IA401"}, {id_sektor:"SU", id_kelas:"AA301"}, {id_sektor:"SU", id_kelas:"AA301"}, 
         {id_sektor:"SU", id_kelas:"IA401"}, {id_sektor:"SU", id_kelas:"IA303"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"AA401"}, {id_sektor:"SU", id_kelas:"IA304"}, {id_sektor:"SU", id_kelas:"IA402"}, {id_sektor:"SU", id_kelas:"IA304"}, {id_sektor:"SU", id_kelas:"IA302"}, {id_sektor:"SU", id_kelas:"IA302"}, {id_sektor:"SU", id_kelas:"IA302"}, 
@@ -287,7 +270,7 @@
         {id_sektor:"GA", id_kelas:"IA403"}, {id_sektor:"GA", id_kelas:"IA303"}, {id_sektor:"GA", id_kelas:"IA305"}, {id_sektor:"GA", id_kelas:"IA307"}, {id_sektor:"GA", id_kelas:"IA307"}, {id_sektor:"GA", id_kelas:"IA403"}, {id_sektor:"GA", id_kelas:"IA307"}, {id_sektor:"GA", id_kelas:"IA303"}, {id_sektor:"GA", id_kelas:"IA303"}, {id_sektor:"GA", id_kelas:"IA303"}, 
         {id_sektor:"GA", id_kelas:"AA401"}, {id_sektor:"GA", id_kelas:"IA403"}, {id_sektor:"GA", id_kelas:"AA401"}, {id_sektor:"GA", id_kelas:"AA302"}, {id_sektor:"GA", id_kelas:"IA402"}, {id_sektor:"GA", id_kelas:"IA302"}, {id_sektor:"GA", id_kelas:"IA306"}, {id_sektor:"GA", id_kelas:"IA402"}, {id_sektor:"GA", id_kelas:"IA304"}, {id_sektor:"GA", id_kelas:"IA304"}, 
         {id_sektor:"GA", id_kelas:"IA304"}, {id_sektor:"GA", id_kelas:"IA304"}, {id_sektor:"GA", id_kelas:"IA304"}, {id_sektor:"GA", id_kelas:"IA507"}, {id_sektor:"GA", id_kelas:"IA307"}, {id_sektor:"GA", id_kelas:"AA302"}, {id_sektor:"GA", id_kelas:"IA303"}, {id_sektor:"GA", id_kelas:"IA302"}, {id_sektor:"GA", id_kelas:"IA402"}, {id_sektor:"GA", id_kelas:"IA301"}, 
-        {id_sektor:"GA", id_kelas:"IA303"}, {id_sektor:"GA", id_kelas:"IA304"}, {id_sektor:"GA", id_kelas:"IA507"}, {id_sektor:"GA", id_kelas:"AA301"}, {id_sektor:"GA", id_kelas:"IA405"}, {id_sektor:"BI", id_kelas:"IA303"}, {id_sektor:"BI", id_kelas:"IA302"}, {id_sektor:"BI", id_kelas:"IA303"}, 
+        {id_sektor:"GA", id_kelas:"IA303"}, {id_sektor:"GA", id_kelas:"IA304"}, {id_sektor:"GA", id_kelas:"IA507"}, {id_sektor:"GA", id_kelas:"AA301"}, {id_sektor:"GA", id_kelas:"IA420"}, {id_sektor:"GA", id_kelas:"IA405"}, {id_sektor:"BI", id_kelas:"IA303"}, {id_sektor:"BI", id_kelas:"IA302"}, {id_sektor:"BI", id_kelas:"IA303"}, 
         {id_sektor:"BI", id_kelas:"IA301"}, {id_sektor:"BI", id_kelas:"IA401"}, {id_sektor:"BI", id_kelas:"IA401"}, {id_sektor:"BI", id_kelas:"IA402"}, {id_sektor:"BI", id_kelas:"IA402"}, {id_sektor:"BI", id_kelas:"IA402"}, {id_sektor:"BA", id_kelas:"AA401"}, {id_sektor:"BA", id_kelas:"AA401"}, {id_sektor:"BA", id_kelas:"IA403"}, {id_sektor:"BA", id_kelas:"IA302"}, 
         {id_sektor:"BA", id_kelas:"IA305"}, {id_sektor:"BA", id_kelas:"IA503"}, {id_sektor:"BA", id_kelas:"IA501"}, {id_sektor:"BA", id_kelas:"IA404"}, {id_sektor:"BA", id_kelas:"IA302"}, {id_sektor:"BA", id_kelas:"AA401"}, {id_sektor:"BA", id_kelas:"IA402"}, {id_sektor:"BA", id_kelas:"AA303"}, {id_sektor:"BA", id_kelas:"AA303"}, {id_sektor:"BA", id_kelas:"AA303"}, 
         {id_sektor:"BA", id_kelas:"AA302"}, {id_sektor:"BA", id_kelas:"IA403"}, {id_sektor:"BA", id_kelas:"IA303"}, {id_sektor:"BA", id_kelas:"IA302"}, {id_sektor:"BA", id_kelas:"IA302"}, {id_sektor:"BA", id_kelas:"IA302"}, {id_sektor:"BA", id_kelas:"IA303"}, {id_sektor:"BA", id_kelas:"IA503"}, {id_sektor:"BA", id_kelas:"IA403"}, {id_sektor:"BA", id_kelas:"IA403"}, 
@@ -385,17 +368,82 @@
         });
     }
 
-    function selectSektor(sektor, btnElement) {
-        selectedSektor = sektor;
-        selectedKelas = null;
-        document.querySelectorAll('.btn-sektor').forEach(b => b.classList.remove('active'));
-        btnElement.classList.add('active');
+	function selectSektor(sektor, btnElement) {
+		selectedSektor = sektor;
+		selectedKelas = null;
+		document.querySelectorAll('.btn-sektor').forEach(b => b.classList.remove('active'));
+		btnElement.classList.add('active');
 
-        document.getElementById('kelas-form-container').innerHTML = '';
-        renderSektorConfig(sektor);
-        renderKelasList(sektor);
-    }
+		document.getElementById('kelas-form-container').innerHTML = '';
+		renderSektorConfig(sektor);
+		renderKelasList(sektor);
+		
+		// Panggil fungsi tabel detail sektor di sini
+		renderSektorDetailTable(sektor);
+	}
+	
+	function renderSektorDetailTable(sektor) {
+		const container = document.getElementById('sektor-detail-container');
+		
+		// Ambil daftar kelas yang sesuai dengan sektor yang dipilih
+		const kelasSektor = masterData.filter(item => item.id_sektor === sektor);
+		
+		// Hilangkan duplikasi kelas jika ada di masterData
+		const uniqueKelasMap = new Map();
+		kelasSektor.forEach(item => {
+			if (!uniqueKelasMap.has(item.id_kelas)) {
+				uniqueKelasMap.set(item.id_kelas, item);
+			}
+		});
 
+		if (uniqueKelasMap.size === 0) {
+			container.innerHTML = '';
+			return;
+		}
+
+		let html = `
+			<div class="kelas-card" style="max-width: 100%; margin-top: 20px;">
+				<div class="kelas-title">Daftar Rekap Kelas - Sektor ${sektor === "L5" ? "L5" : sektor}</div>
+				<div class="table-responsive">
+					<table>
+						<thead>
+							<tr>
+								<th>ID Kelas</th>
+								<th>ID Bendahara</th>
+								<th>Bisa Hadir</th>
+								<th>Sudah Install</th>
+							</tr>
+						</thead>
+						<tbody>
+		`;
+
+		uniqueKelasMap.forEach((value, kelas) => {
+			const uniqueKey = getUniqueKey(sektor, kelas);
+			const record = dataSosialisasiMap[uniqueKey] || {};
+			
+			const idBendahara = record.id_bendahara ? record.id_bendahara : '<span style="color: #999; font-style: italic;">Belum diisi</span>';
+			const hadir = record.hadir ? record.hadir : '<span style="color: #999; font-style: italic;">-</span>';
+			const tele = record.tele ? record.tele : '<span style="color: #999; font-style: italic;">-</span>';
+
+			html += `
+				<tr>
+					<td><b>${kelas}</b></td>
+					<td>${idBendahara}</td>
+					<td>${hadir}</td>
+					<td>${tele}</td>
+				</tr>
+			`;
+		});
+
+		html += `
+						</tbody>
+					</table>
+				</div>
+			</div>
+		`;
+
+		container.innerHTML = html;
+	}
     // Render Form Input Tanggal Sosialisasi untuk Sektor Terpilih
     function renderSektorConfig(sektor) {
         const container = document.getElementById('sektor-config-container');
@@ -584,11 +632,11 @@
 
                 renderRekap();
                 document.getElementById('loading-status').style.display = 'none';
-                document.getElementById('table-rekap-1').style.display = 'table';
-                document.getElementById('table-rekap-2').style.display = 'table';
+                document.getElementById('table-rekap-gabungan').style.display = 'table';
                 
                 if (selectedSektor) {
                     renderSektorConfig(selectedSektor);
+					renderSektorDetailTable(selectedSektor);
                     if (selectedKelas) {
                         renderFormKelas(selectedSektor, selectedKelas);
                     }
@@ -603,7 +651,7 @@
             });
     }
 
-    function renderRekap() {
+	function renderRekap() {
         const sektorSet = new Set(masterData.map(item => item.id_sektor));
         let daftarSektor = Array.from(sektorSet).sort();
         if (daftarSektor.includes("L5")) {
@@ -611,14 +659,13 @@
             daftarSektor.unshift("L5");
         }
 
-        const tbody1 = document.getElementById('tbody-rekap-1');
-        const tbody2 = document.getElementById('tbody-rekap-2');
-        tbody1.innerHTML = '';
-        tbody2.innerHTML = '';
+        const tbodyGabungan = document.getElementById('tbody-rekap-gabungan');
+        tbodyGabungan.innerHTML = '';
 
         let grandTotalKelas = 0;
-        let totalHadirBisa = 0, totalHadirTidak = 0, totalHadirBelum = 0;
-        let totalTeleSudah = 0, totalTeleBelum = 0, totalTeleBelumIsi = 0;
+        let totalHadirBisa = 0;
+        let totalTeleSudah = 0;
+        let totalBelumMengisi = 0;
 
         daftarSektor.forEach(sektor => {
             const kelasSektor = masterData.filter(item => item.id_sektor === sektor);
@@ -629,79 +676,56 @@
                 ? formatTanggal(rawTgl) 
                 : '<span style="color:red; font-style:italic;">Belum diatur</span>';
 
-            let hadirBisa = 0, hadirTidak = 0, hadirBelum = 0;
-            let teleSudah = 0, teleBelum = 0, teleBelumIsi = 0;
+            let hadirBisa = 0;
+            let teleSudah = 0;
+            let belumMengisiSektor = 0;
 
             kelasSektor.forEach(item => {
                 const uniqueKey = getUniqueKey(item.id_sektor, item.id_kelas);
                 const record = dataSosialisasiMap[uniqueKey];
 
-                if (record && record.hadir) {
-                    if (record.hadir === 'Bisa') hadirBisa++;
-                    else if (record.hadir === 'Tidak') hadirTidak++;
-                    else hadirBelum++;
-                } else {
-                    hadirBelum++;
+                // Hitung Bisa Hadir
+                if (record && record.hadir === 'Bisa') {
+                    hadirBisa++;
                 }
 
-                if (record && record.tele) {
-                    if (record.tele === 'Sudah') teleSudah++;
-                    else if (record.tele === 'Belum') teleBelum++;
-                    else teleBelumIsi++;
-                } else {
-                    teleBelumIsi++;
+                // Hitung Sudah Install Tele
+                if (record && record.tele === 'Sudah') {
+                    teleSudah++;
+                }
+
+                // Kriteria Belum Mengisi (jika salah satu atau kedua data belum lengkap diisi)
+                if (!record || !record.hadir || !record.tele) {
+                    belumMengisiSektor++;
                 }
             });
 
             grandTotalKelas += totalKelas;
             totalHadirBisa += hadirBisa;
-            totalHadirTidak += hadirTidak;
-            totalHadirBelum += hadirBelum;
-
             totalTeleSudah += teleSudah;
-            totalTeleBelum += teleBelum;
-            totalTeleBelumIsi += teleBelumIsi;
+            totalBelumMengisi += belumMengisiSektor;
 
-            tbody1.innerHTML += `
+            // Masukkan ke dalam 1 baris tabel gabungan
+            tbodyGabungan.innerHTML += `
                 <tr>
                     <td><b>${sektor === "L5" ? "L5" : "Sektor " + sektor}</b></td>
                     <td>${tglSektor}</td>
                     <td>${totalKelas}</td>
                     <td>${hadirBisa}</td>
-                    <td>${hadirTidak}</td>
-                    <td>${hadirBelum}</td>
-                </tr>
-            `;
-
-            tbody2.innerHTML += `
-                <tr>
-                    <td><b>${sektor === "L5" ? "L5" : "Sektor " + sektor}</b></td>
-                    <td>${tglSektor}</td>
-                    <td>${totalKelas}</td>
                     <td>${teleSudah}</td>
-                    <td>${teleBelum}</td>
-                    <td>${teleBelumIsi}</td>
+                    <td>${belumMengisiSektor}</td>
                 </tr>
             `;
         });
 
-        tbody1.innerHTML += `
+        // Baris Total Keseluruhan di bawah tabel
+        tbodyGabungan.innerHTML += `
             <tr style="font-weight: bold; background-color: #f2f2f2;">
                 <td colspan="2">Total Keseluruhan</td>
                 <td>${grandTotalKelas}</td>
                 <td>${totalHadirBisa}</td>
-                <td>${totalHadirTidak}</td>
-                <td>${totalHadirBelum}</td>
-            </tr>
-        `;
-
-        tbody2.innerHTML += `
-            <tr style="font-weight: bold; background-color: #f2f2f2;">
-                <td colspan="2">Total Keseluruhan</td>
-                <td>${grandTotalKelas}</td>
                 <td>${totalTeleSudah}</td>
-                <td>${totalTeleBelum}</td>
-                <td>${totalTeleBelumIsi}</td>
+                <td>${totalBelumMengisi}</td>
             </tr>
         `;
     }
