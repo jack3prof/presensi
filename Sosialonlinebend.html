@@ -285,11 +285,11 @@
     ];
 
     // 1. Ubah sektor kelas yang karakter ke-3 nya angka '5' menjadi "L5"
-    masterData.forEach(item => {
-        if (item.id_kelas && item.id_kelas.length >= 3 && item.id_kelas.charAt(2) === '5') {
-            item.id_sektor = "L5";
-        }
-    });
+   // masterData.forEach(item => {
+   //     if (item.id_kelas && item.id_kelas.length >= 3 && item.id_kelas.charAt(2) === '5') {
+   //         item.id_sektor = "L5";
+	//    }
+   // });
 
     // 2. Hilangkan duplikasi gabungan (id_sektor + id_kelas) yang berulang
     const seenSet = new Set();
@@ -351,10 +351,10 @@
         let sektorList = Array.from(sekaSet).sort();
 
         // Pastikan L5 diletakkan di paling kiri (posisi pertama) jika ada
-        if (sektorList.includes("L5")) {
-            sektorList = sektorList.filter(s => s !== "L5");
-            sektorList.unshift("L5");
-        }
+  //      if (sektorList.includes("L5")) {
+  //          sektorList = sektorList.filter(s => s !== "L5");
+  //          sektorList.unshift("L5");
+  //      }
 
         const container = document.getElementById('sektor-container');
         container.innerHTML = '';
